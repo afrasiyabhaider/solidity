@@ -93,7 +93,6 @@ ssacfg::PhiMapping::transformStackToPhiValues(std::vector<StackSlot> const& _sta
 	return _stack | ranges::views::transform(map) | ranges::to<std::vector>;
 }
 
-
 void ssacfg::Stack::pop(bool _generateInstruction)
 {
 	yulAssert(!m_stack.empty());
@@ -439,6 +438,7 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 				// initial stack layout is just the live-ins (would also suffice to be the stack top)
 				targetStack = m_liveness.liveIn(_jump.target) | ranges::to<std::vector<ssacfg::StackSlot>>;
 
+			std::cout << "\t\tJUMP Creating target stack for jump " << _block.value << " -> " << _jump.target.value << std::endl;
 			m_stack.createExactStack(*targetStack, ssacfg::PhiMapping{m_cfg, _block, _jump.target});
 			m_assembly.appendJumpTo(*targetLabel);
 			if (!m_generatedBlocks[_jump.target.value])
@@ -447,28 +447,35 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 		[&](SSACFG::BasicBlock::ConditionalJump const& _conditionalJump)
 		{
 			auto& nonZeroLayout = blockData(_conditionalJump.nonZero).stackIn;
-			auto& nonZeroLabel = blockData(_conditionalJump.nonZero).label;
-			if (!nonZeroLabel)
-				nonZeroLabel = m_assembly.newLabelId();
-			auto& zeroLayout = blockData(_conditionalJump.zero).stackIn;
-			auto& zeroLabel = blockData(_conditionalJump.zero).label;
-			if (!zeroLabel)
-				zeroLabel = m_assembly.newLabelId();
 			if (!nonZeroLayout)
-				nonZeroLayout = m_liveness.liveIn(_conditionalJump.nonZero) | ranges::to<std::vector<ssacfg::StackSlot>>;
-			if (!zeroLayout)
-				zeroLayout = m_liveness.liveIn(_conditionalJump.zero) | ranges::to<std::vector<ssacfg::StackSlot>>;
-			auto const liveOut = m_liveness.liveOut(_block) | ranges::to<std::vector<ssacfg::StackSlot>>;
-			std::cout << "\t\tCreating stack for non zero layout" << std::endl;
-			m_stack.createStack(*nonZeroLayout + std::vector<ssacfg::StackSlot>{_conditionalJump.condition}, liveOut, ssacfg::PhiMapping{m_cfg, _block, _conditionalJump.nonZero});
+			{
+				auto const liveIn = m_liveness.liveIn(_conditionalJump.nonZero) | ranges::to<std::vector<ssacfg::StackSlot>>;
+				auto const liveOut = m_liveness.liveOut(_block) | ranges::to<std::vector<ssacfg::StackSlot>>;
+				nonZeroLayout = liveOut + liveIn;
+				std::cout << "\t\tJUMPI Creating stack for non zero layout" << std::endl;
+				m_stack.createStack(*nonZeroLayout + std::vector<ssacfg::StackSlot>{_conditionalJump.condition}, {}, ssacfg::PhiMapping{m_cfg, _block, _conditionalJump.nonZero});
+			}
+			else
+			{
+				m_stack.createExactStack(*nonZeroLayout + std::vector<ssacfg::StackSlot>{_conditionalJump.condition}, ssacfg::PhiMapping{m_cfg, _block, _conditionalJump.nonZero});
+			}
 			yulAssert(m_stack.top() == ssacfg::StackSlot{_conditionalJump.condition});
 
 			// Emit the conditional jump to the non-zero label and update the stored stack.
+			auto& nonZeroLabel = blockData(_conditionalJump.nonZero).label;
+			if (!nonZeroLabel)
+				nonZeroLabel = m_assembly.newLabelId();
 			m_assembly.appendJumpToIf(*nonZeroLabel);
 			m_stack.pop(false);
 
-			std::cout << "\t\tCreating stack for zero layout" << std::endl;
+			std::cout << "\t\tJUMPI Creating stack for zero layout" << std::endl;
+			auto& zeroLayout = blockData(_conditionalJump.zero).stackIn;
+			if (!zeroLayout)
+				zeroLayout = m_liveness.liveIn(_conditionalJump.zero) | ranges::to<std::vector<ssacfg::StackSlot>>;
 			m_stack.createStack(*zeroLayout, {}, ssacfg::PhiMapping{m_cfg, _block, _conditionalJump.zero});
+			auto& zeroLabel = blockData(_conditionalJump.zero).label;
+			if (!zeroLabel)
+				zeroLabel = m_assembly.newLabelId();
 			m_assembly.appendJumpTo(*zeroLabel);
 
 			if (!m_generatedBlocks[_conditionalJump.zero.value])

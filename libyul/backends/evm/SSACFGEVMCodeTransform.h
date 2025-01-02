@@ -66,11 +66,14 @@ public:
 	SSACFG::ValueId apply(SSACFG::ValueId const _valueId) const
 	{
 		auto const it = m_mapping.find(_valueId);
-		return it == m_mapping.end() ? _valueId : it->second;
+		SSACFG::ValueId const result = it == m_mapping.end() ? _valueId : it->second;
+		return result;
 	}
 
 private:
+	// maps v_i -> phi_j (can be ambiguous, e.g., phi1 = phi(b1 => x1, b2 => 0), phi2 = phi(b1 => x1, b2 => x2))
 	std::map<SSACFG::ValueId, SSACFG::ValueId> m_mapping;
+	// maps phi_j -> v_i
 	std::map<SSACFG::ValueId, SSACFG::ValueId> m_reverseMapping;
 };
 class Stack
