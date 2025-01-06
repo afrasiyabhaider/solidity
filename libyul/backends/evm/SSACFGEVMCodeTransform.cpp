@@ -180,8 +180,7 @@ void ssacfg::Stack::createExactStack(std::vector<StackSlot> const& _target, PhiM
 		if (mappedStack.m_stack[i] != _target[i])
 		{
 			yulAssert(std::holds_alternative<SSACFG::ValueId>(mappedStack.m_stack[i]));
-			mappedStack.m_stack[i] = _phis.apply(std::get<SSACFG::ValueId>(mappedStack.m_stack[i]));
-			yulAssert(mappedStack.m_stack[i] == _target[i]);
+			mappedStack.m_stack[i] = _target[i];
 		}
 	}
 	m_stack = mappedStack.m_stack;

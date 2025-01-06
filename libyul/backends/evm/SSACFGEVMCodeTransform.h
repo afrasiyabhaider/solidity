@@ -56,23 +56,14 @@ public:
 			auto const& phiInfo = _cfg.valueInfo(phiId);
 			yulAssert(std::holds_alternative<SSACFG::PhiValue>(phiInfo));
 			auto const& phi = std::get<SSACFG::PhiValue>(phiInfo);
-			m_mapping[phi.arguments[argIndex]] = phiId;
 			m_reverseMapping[phiId] = phi.arguments[argIndex];
 		}
 	}
 
-	bool empty() const { return m_mapping.empty(); }
+	bool empty() const { return m_reverseMapping.empty(); }
 	std::vector<StackSlot> transformStackToPhiValues(std::vector<StackSlot> const& _stack) const;
-	SSACFG::ValueId apply(SSACFG::ValueId const _valueId) const
-	{
-		auto const it = m_mapping.find(_valueId);
-		SSACFG::ValueId const result = it == m_mapping.end() ? _valueId : it->second;
-		return result;
-	}
 
 private:
-	// maps v_i -> phi_j (can be ambiguous, e.g., phi1 = phi(b1 => x1, b2 => 0), phi2 = phi(b1 => x1, b2 => x2))
-	std::map<SSACFG::ValueId, SSACFG::ValueId> m_mapping;
 	// maps phi_j -> v_i
 	std::map<SSACFG::ValueId, SSACFG::ValueId> m_reverseMapping;
 };
