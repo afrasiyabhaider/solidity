@@ -38,7 +38,7 @@ using namespace solidity::yul;
 namespace
 {
 
-static constexpr bool debugOutput = false;
+constexpr bool debugOutput = false;
 
 std::string ssaCfgVarToString(SSACFG const& _cfg, SSACFG::ValueId _var)
 {
@@ -296,7 +296,6 @@ std::vector<StackTooDeepError> SSACFGEVMCodeTransform::run(
 	std::cout << "Running SSACFGEVMCodeTransform" << std::endl;
 	if constexpr (debugOutput)
 	{
-		// todo remove, just for debugging
 		fmt::print("{}\n", _liveness.toDot());
 		std::fflush(nullptr);
 	}
@@ -396,7 +395,6 @@ void SSACFGEVMCodeTransform::transformFunction(Scope::Function const& _function)
 		std::cout << "Generating code for function " << _function.name.str() << ", label=" << label << std::endl;
 	m_assembly.appendLabel(label);
 	blockData(m_cfg.entry).stackIn = m_cfg.arguments | ranges::views::transform([](auto&& _tuple) { return std::get<1>(_tuple); }) | ranges::to<std::vector<ssacfg::StackSlot>>;
-	// todo ranges::views::reverse | ?
 	(*this)(m_cfg.entry);
 }
 
@@ -415,6 +413,7 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 
 	if constexpr (debugOutput)
 		std::cout << "\tGenerating for Block " << _block.value << " with label " << data.label.value() << std::endl;
+
 	{
 		// copy stackIn into stack
 		yulAssert(data.stackIn, fmt::format("No starting layout for block id {}", _block.value));
