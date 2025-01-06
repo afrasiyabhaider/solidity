@@ -50,6 +50,8 @@ std::vector<StackTooDeepError> OptimizedEVMCodeTransform::run(
 	UseNamedLabels _useNamedLabelsForFunctions
 )
 {
+	yulAssert(false);
+	yulAssert(false);
 	auto start = std::chrono::steady_clock::now();
 	std::unique_ptr<CFG> dfg = ControlFlowGraphBuilder::build(_analysisInfo, _dialect, _block);
 	StackLayout stackLayout = StackLayoutGenerator::run(*dfg, !_dialect.eofVersion().has_value());

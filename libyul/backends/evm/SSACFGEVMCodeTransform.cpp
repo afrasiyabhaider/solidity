@@ -38,6 +38,8 @@ using namespace solidity::yul;
 namespace
 {
 
+static constexpr bool debugOutput = false;
+
 std::string ssaCfgVarToString(SSACFG const& _cfg, SSACFG::ValueId _var)
 {
 	if (_var.value == std::numeric_limits<size_t>::max())
@@ -214,7 +216,8 @@ void ssacfg::Stack::clear()
 
 void ssacfg::Stack::createExactStack(std::vector<StackSlot> const& _target)
 {
-	std::cout << fmt::format("\t\tCreating exact stack {} -> {}", stackToString(m_cfg.get(), m_stack), stackToString(m_cfg.get(), _target)) << std::endl;
+	if constexpr (debugOutput)
+		std::cout << fmt::format("\t\tCreating exact stack {} -> {}", stackToString(m_cfg.get(), m_stack), stackToString(m_cfg.get(), _target)) << std::endl;
 
 	{
 		auto const histogram = [](std::vector<StackSlot> const& _stack)
@@ -291,6 +294,8 @@ std::vector<StackTooDeepError> SSACFGEVMCodeTransform::run(
 	BuiltinContext& _builtinContext,
 	UseNamedLabels _useNamedLabelsForFunctions)
 {
+	std::cout << "Running SSACFGEVMCodeTransform" << std::endl;
+	if constexpr (debugOutput)
 	{
 		// todo remove, just for debugging
 		fmt::print("{}\n", _liveness.toDot());
@@ -388,7 +393,8 @@ void SSACFGEVMCodeTransform::transformFunction(Scope::Function const& _function)
 {
 	// Force function entry block to start from initial function layout.
 	auto const label = functionLabel(_function);
-	std::cout << "Generating code for function " << _function.name.str() << ", label=" << label << std::endl;
+	if constexpr (debugOutput)
+		std::cout << "Generating code for function " << _function.name.str() << ", label=" << label << std::endl;
 	m_assembly.appendLabel(label);
 	blockData(m_cfg.entry).stackIn = m_cfg.arguments | ranges::views::transform([](auto&& _tuple) { return std::get<1>(_tuple); }) | ranges::to<std::vector<ssacfg::StackSlot>>;
 	// todo ranges::views::reverse | ?
@@ -408,7 +414,8 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 	}
 	m_assembly.appendLabel(*data.label);
 
-	std::cout << "\tGenerating for Block " << _block.value << " with label " << data.label.value() << std::endl;
+	if constexpr (debugOutput)
+		std::cout << "\tGenerating for Block " << _block.value << " with label " << data.label.value() << std::endl;
 	{
 		// copy stackIn into stack
 		yulAssert(data.stackIn, fmt::format("No starting layout for block id {}", _block.value));
@@ -438,7 +445,8 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 				// initial stack layout is just the live-ins (would also suffice to be the stack top)
 				targetStack = m_liveness.liveIn(_jump.target) | ranges::to<std::vector<ssacfg::StackSlot>>;
 
-			std::cout << "\t\tJUMP Creating target stack for jump " << _block.value << " -> " << _jump.target.value << std::endl;
+			if constexpr (debugOutput)
+				std::cout << "\t\tJUMP Creating target stack for jump " << _block.value << " -> " << _jump.target.value << std::endl;
 			m_stack.createExactStack(*targetStack, ssacfg::PhiMapping{m_cfg, _block, _jump.target});
 			m_assembly.appendJumpTo(*targetLabel);
 			if (!m_generatedBlocks[_jump.target.value])
@@ -452,7 +460,9 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 				auto const liveIn = m_liveness.liveIn(_conditionalJump.nonZero) | ranges::to<std::vector<ssacfg::StackSlot>>;
 				auto const liveOut = m_liveness.liveOut(_block) | ranges::to<std::vector<ssacfg::StackSlot>>;
 				nonZeroLayout = liveOut + liveIn;
-				std::cout << "\t\tJUMPI Creating stack for non zero layout" << std::endl;
+				// todo actually this is a bit much, we just need enough to populate the livein of the zero branch
+				if constexpr (debugOutput)
+					std::cout << "\t\tJUMPI Creating stack for non zero layout" << std::endl;
 				m_stack.createStack(*nonZeroLayout + std::vector<ssacfg::StackSlot>{_conditionalJump.condition}, {}, ssacfg::PhiMapping{m_cfg, _block, _conditionalJump.nonZero});
 			}
 			else
@@ -468,7 +478,8 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 			m_assembly.appendJumpToIf(*nonZeroLabel);
 			m_stack.pop(false);
 
-			std::cout << "\t\tJUMPI Creating stack for zero layout" << std::endl;
+			if constexpr (debugOutput)
+				std::cout << "\t\tJUMPI Creating stack for zero layout" << std::endl;
 			auto& zeroLayout = blockData(_conditionalJump.zero).stackIn;
 			if (!zeroLayout)
 				zeroLayout = m_liveness.liveIn(_conditionalJump.zero) | ranges::to<std::vector<ssacfg::StackSlot>>;
@@ -539,7 +550,8 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::Operation const& _operation, std
 	m_stack.createStack(requiredStackTop, liveOutWithoutOutputs | ranges::to<std::vector>);
 	std::visit(util::GenericVisitor {
 		[&](SSACFG::BuiltinCall const& _builtin) {
-			std::cout << "\t\t\tBuiltin call: " << _builtin.builtin.get().name << ": " << stackToString(m_cfg, m_stack.data()) << std::endl;
+			if constexpr (debugOutput)
+				std::cout << "\t\t\tBuiltin call: " << _builtin.builtin.get().name << ": " << stackToString(m_cfg, m_stack.data()) << std::endl;
 			m_assembly.setSourceLocation(originLocationOf(_builtin));
 			dynamic_cast<BuiltinFunctionForEVM const&>(_builtin.builtin.get()).generateCode(
 				_builtin.call,
@@ -548,10 +560,13 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::Operation const& _operation, std
 			);
 		},
 		[&](SSACFG::Call const& _call) {
-			std::cout << "\t\t\tCall: " << _call.function.get().name.str() << " (label=" << functionLabel(_call.function) << ")" << ": " << stackToString(m_cfg, m_stack.data());
-			if (returnLabel)
-				std::cout << ", returnLabel: " << *returnLabel;
-			std::cout << std::endl;
+			if constexpr (debugOutput)
+			{
+				std::cout << "\t\t\tCall: " << _call.function.get().name.str() << " (label=" << functionLabel(_call.function) << ")" << ": " << stackToString(m_cfg, m_stack.data());
+				if (returnLabel)
+			   		std::cout << ", returnLabel: " << *returnLabel;
+				std::cout << std::endl;
+			}
 			m_assembly.setSourceLocation(originLocationOf(_call));
 			m_assembly.appendJumpTo(
 				functionLabel(_call.function),
