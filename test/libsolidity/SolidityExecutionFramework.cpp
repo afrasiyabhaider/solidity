@@ -59,8 +59,17 @@ bytes SolidityExecutionFramework::multiSourceCompileContract(
 	m_compiler.setRevertStringBehaviour(m_revertStrings);
 	m_compiler.setEVMVersion(m_evmVersion);
 	m_compiler.setEOFVersion(m_eofVersion);
+	m_optimiserSettings = OptimiserSettings::full();
+	m_optimiserSettings.runPeephole = false;
+	m_optimiserSettings.runInliner = false;
+	m_optimiserSettings.runJumpdestRemover = false;
+	m_optimiserSettings.runOrderLiterals = false;
+	m_optimiserSettings.runDeduplicate = false;
+	m_optimiserSettings.runCSE = false;
+	m_optimiserSettings.runConstantOptimiser = false;
+	m_optimiserSettings.runSSAYul = true;
 	m_compiler.setOptimiserSettings(m_optimiserSettings);
-	m_compiler.setViaIR(m_compileViaYul);
+	m_compiler.setViaIR(true);
 	m_compiler.setRevertStringBehaviour(m_revertStrings);
 	if (!m_appendCBORMetadata) {
 		m_compiler.setMetadataFormat(CompilerStack::MetadataFormat::NoMetadata);
