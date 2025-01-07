@@ -38,7 +38,7 @@ using namespace solidity::yul;
 namespace
 {
 
-constexpr bool debugOutput = true;
+constexpr bool debugOutput = false;
 
 std::string ssaCfgVarToString(SSACFG const& _cfg, SSACFG::ValueId _var)
 {
@@ -459,7 +459,7 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 				ssacfg::PhiMapping zeroBranchMapping {m_cfg, _block, _conditionalJump.zero};
 				auto const liveOut = zeroBranchMapping.transformStackToPhiValues(m_liveness.liveIn(_conditionalJump.zero) | ranges::to<std::vector<ssacfg::StackSlot>>);
 				// todo uniqueify
-				nonZeroLayout = liveOut + liveIn;
+				nonZeroLayout = (liveOut + liveIn) | ranges::to<std::set> | ranges::to<std::vector>;
 				// todo actually this is a bit much, we just need enough to populate the livein of the zero branch
 				if constexpr (debugOutput)
 					std::cout << "\t\tJUMPI Creating stack for non zero layout" << std::endl;
