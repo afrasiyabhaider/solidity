@@ -93,12 +93,7 @@ void SSACFGLiveness::runDagDfs()
 				{
 					auto const& info = m_cfg.valueInfo(phi);
 					yulAssert(std::holds_alternative<SSACFG::PhiValue>(info), "value info of phi wasn't PhiValue");
-					auto const& entries = m_cfg.block(std::get<SSACFG::PhiValue>(info).block).entries;
-					// this is getting the argument index of the phi function corresponding to the path going
-					// through "blockId", ie, the currently handled block
-					auto const it = entries.find(blockId);
-					yulAssert(it != entries.end());
-					auto const argIndex = static_cast<size_t>(std::distance(entries.begin(), it));
+					auto const argIndex = m_cfg.phiArgumentIndex(blockId, _successor);
 					yulAssert(argIndex < std::get<SSACFG::PhiValue>(info).arguments.size());
 					auto const arg = std::get<SSACFG::PhiValue>(info).arguments.at(argIndex);
 					if (!std::holds_alternative<SSACFG::LiteralValue>(m_cfg.valueInfo(arg)))
