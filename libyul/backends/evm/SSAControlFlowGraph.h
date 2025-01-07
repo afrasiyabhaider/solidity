@@ -216,7 +216,7 @@ public:
 	{
 		auto const& targetBlock = block(_target);
 		auto idx = util::findOffset(targetBlock.entries, _source);
-		yulAssert(idx, "Current block not found as entry in one of the exits of the current block.");
+		yulAssert(idx, fmt::format("Target block {} not found as entry in one of the exits of the current block {}.", _target.value, _source.value));
 		return *idx;
 	}
 
