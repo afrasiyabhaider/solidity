@@ -38,7 +38,7 @@ using namespace solidity::yul;
 namespace
 {
 
-constexpr bool debugOutput = false;
+constexpr bool debugOutput = true;
 
 std::string ssaCfgVarToString(SSACFG const& _cfg, SSACFG::ValueId _var)
 {
@@ -116,9 +116,9 @@ void ssacfg::Stack::push(SSACFG::ValueId const& _value, bool _generateInstructio
 	m_stack.emplace_back(_value);
 	if (_generateInstruction)
 		std::visit(util::GenericVisitor{
-			[](SSACFG::UnreachableValue const&) { solAssert(false); },
-			[](SSACFG::VariableValue const&) { solAssert(false); },
-			[](SSACFG::PhiValue const&) { solAssert(false); },
+			[&](SSACFG::UnreachableValue const&) { solAssert(false, fmt::format("Tried bringing up v{}", _value.value)); },
+			[&](SSACFG::VariableValue const&) { solAssert(false, fmt::format("Tried bringing up v{}", _value.value)); },
+			[&](SSACFG::PhiValue const&) { solAssert(false, fmt::format("Tried bringing up v{}", _value.value)); },
 			[&](SSACFG::LiteralValue const& _literal) {
 				m_assembly.get().appendConstant(_literal.value);
 			}
@@ -456,7 +456,9 @@ void SSACFGEVMCodeTransform::operator()(SSACFG::BlockId const _block)
 			if (!nonZeroLayout)
 			{
 				auto const liveIn = m_liveness.liveIn(_conditionalJump.nonZero) | ranges::to<std::vector<ssacfg::StackSlot>>;
-				auto const liveOut = m_liveness.liveOut(_block) | ranges::to<std::vector<ssacfg::StackSlot>>;
+				ssacfg::PhiMapping zeroBranchMapping {m_cfg, _block, _conditionalJump.zero};
+				auto const liveOut = zeroBranchMapping.transformStackToPhiValues(m_liveness.liveIn(_conditionalJump.zero) | ranges::to<std::vector<ssacfg::StackSlot>>);
+				// todo uniqueify
 				nonZeroLayout = liveOut + liveIn;
 				// todo actually this is a bit much, we just need enough to populate the livein of the zero branch
 				if constexpr (debugOutput)
