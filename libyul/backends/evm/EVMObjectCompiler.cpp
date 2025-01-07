@@ -102,6 +102,7 @@ void EVMObjectCompiler::run(Object const& _object, bool _optimize, bool const _s
 				*_object.dialect(),
 				_object.code()->root()
 			);
+			// std::cout << AsmPrinter{*_object.dialect()}(_object.code()->root()) << std::endl;
 			ControlFlowLiveness const liveness(*controlFlow);
 			stackErrors = SSACFGEVMCodeTransform::run(
 				m_assembly,

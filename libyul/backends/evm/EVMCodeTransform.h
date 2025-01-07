@@ -97,7 +97,6 @@ public:
 		std::nullopt
 	)
 	{
-		yulAssert(false);
 	}
 
 	std::vector<StackTooDeepError> const& stackErrors() const { return m_stackErrors; }
