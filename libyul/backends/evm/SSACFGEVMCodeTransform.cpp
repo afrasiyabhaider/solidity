@@ -38,7 +38,7 @@ using namespace solidity::yul;
 namespace
 {
 
-constexpr bool debugOutput = true;
+constexpr bool debugOutput = false;
 
 std::string ssaCfgVarToString(SSACFG const& _cfg, SSACFG::ValueId _var)
 {
@@ -94,11 +94,10 @@ ssacfg::StackSlot ssacfg::PhiMapping::transform(StackSlot const& _slot) const
 		auto const it = m_reverseMapping.find(*valueId);
 		if (it == m_reverseMapping.end())
 			return _slot;
-		return transform(it->second);
+		return it->second;
 	}
 	return _slot;
 }
-
 
 void ssacfg::Stack::pop(bool _generateInstruction)
 {
@@ -182,18 +181,16 @@ void ssacfg::Stack::createExactStack(std::vector<StackSlot> const& _target, PhiM
 	}
 
 	auto const mappedTarget = _phis.transformStackToPhiValues(_target);
-	auto mappedStack = Stack(m_assembly, m_cfg.get(), _phis.transformStackToPhiValues(m_stack));
-	mappedStack.permute(mappedTarget);
+	permute(mappedTarget);
 	// now we go through the mapped stack and undo the phi mapping where required
-	for (size_t i = 0; i < mappedStack.size(); ++i)
+	for (size_t i = 0; i < size(); ++i)
 	{
-		if (mappedStack.m_stack[i] != _target[i])
+		if (m_stack[i] != _target[i])
 		{
-			yulAssert(std::holds_alternative<SSACFG::ValueId>(mappedStack.m_stack[i]));
-			mappedStack.m_stack[i] = _target[i];
+			yulAssert(std::holds_alternative<SSACFG::ValueId>(m_stack[i]));
+			m_stack[i] = _target[i];
 		}
 	}
-	m_stack = mappedStack.m_stack;
 	yulAssert(
 		m_stack == _target,
 		fmt::format(
