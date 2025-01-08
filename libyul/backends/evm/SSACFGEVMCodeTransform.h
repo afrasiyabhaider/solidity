@@ -61,6 +61,7 @@ public:
 	}
 
 	bool empty() const { return m_reverseMapping.empty(); }
+	StackSlot transform(StackSlot const& _slot) const;
 	std::vector<StackSlot> transformStackToPhiValues(std::vector<StackSlot> const& _stack) const;
 
 private:
@@ -79,7 +80,7 @@ public:
 
 	size_t size() const { return m_stack.size(); }
 
-	void createExactStack(std::vector<StackSlot> const& _target);
+	void permute(std::vector<StackSlot> const& _target);
 	void createExactStack(std::vector<StackSlot> const& _target, PhiMapping const& _phis);
 
 	void createStack(std::vector<StackSlot> const& _top, std::vector<StackSlot> const& _rest, PhiMapping const& _phis = {});
@@ -90,6 +91,7 @@ public:
 		return m_stack.back();
 	}
 
+	SSACFG::LiteralValue resolveLiteralValue(StackSlot const& _slot) const;
 	void push(SSACFG::ValueId const& _value, bool _generateInstruction = true);
 	void pop(bool _generateInstruction = true);
 	void swap(size_t _depth, bool _generateInstruction = true);
