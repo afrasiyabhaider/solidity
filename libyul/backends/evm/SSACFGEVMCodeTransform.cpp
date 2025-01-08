@@ -182,23 +182,7 @@ void ssacfg::Stack::createExactStack(std::vector<StackSlot> const& _target, PhiM
 
 	auto const mappedTarget = _phis.transformStackToPhiValues(_target);
 	permute(mappedTarget);
-	// now we go through the mapped stack and undo the phi mapping where required
-	for (size_t i = 0; i < size(); ++i)
-	{
-		if (m_stack[i] != _target[i])
-		{
-			yulAssert(std::holds_alternative<SSACFG::ValueId>(m_stack[i]));
-			m_stack[i] = _target[i];
-		}
-	}
-	yulAssert(
-		m_stack == _target,
-		fmt::format(
-			"Stack target mismatch: current = {} =/= {} = target",
-			stackToString(m_cfg.get(), m_stack),
-			stackToString(m_cfg.get(), _target)
-		)
-	);
+	m_stack = _target;
 }
 void ssacfg::Stack::createStack(
 	std::vector<StackSlot> const& _top,

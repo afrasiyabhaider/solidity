@@ -95,7 +95,7 @@ DataFlowAnalyzer::DataFlowAnalyzer(
 
 DataFlowAnalyzer::~DataFlowAnalyzer()
 {
-	std::cout << "DFA elapsed cumulative: " << timeSpent << " ms" << std::endl;
+	//std::cout << "DFA elapsed cumulative: " << timeSpent << " ms" << std::endl;
 }
 
 

@@ -337,7 +337,6 @@ YulStack::assembleEVMWithDeployed(std::optional<std::string_view> _deployName)
 	);
 	try
 	{
-		yulAssert(!m_optimiserSettings.runSSAYul || !m_optimiserSettings.runPeephole, "Peephole should not be run with SSA Yul");
 		compileEVM(adapter, optimize, m_optimiserSettings.runSSAYul);
 
 		assembly.optimise(evmasm::Assembly::OptimiserSettings::translateSettings(m_optimiserSettings, m_evmVersion));
