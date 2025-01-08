@@ -16,7 +16,7 @@ contract ClientReceipt {
 }
 // ----
 // constructor(), 2000 wei ->
-// gas irOptimized: 114353
+// gas irOptimized: 114487
 // gas irOptimized code: 58800
 // gas legacy: 118617
 // gas legacy code: 111400

@@ -12,8 +12,8 @@ contract D is C {
 }
 // ----
 // constructor(): 2, 0 ->
-// gas irOptimized: 101581
-// gas irOptimized code: 20200
+// gas irOptimized: 101725
+// gas irOptimized code: 19200
 // gas legacy: 105192
 // gas legacy code: 32000
 // gas legacyOptimized: 101503

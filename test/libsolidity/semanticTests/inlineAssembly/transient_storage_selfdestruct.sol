@@ -40,8 +40,8 @@ contract D {
 // EVMVersion: >=cancun
 // ----
 // constructor() ->
-// gas irOptimized: 127596
-// gas irOptimized code: 221000
+// gas irOptimized: 128545
+// gas irOptimized code: 232400
 // gas legacy: 149480
 // gas legacy code: 501200
 // gas legacyOptimized: 125846

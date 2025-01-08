@@ -9,8 +9,8 @@ contract B is A {
 }
 // ----
 // constructor() ->
-// gas irOptimized: 99436
-// gas irOptimized code: 20200
+// gas irOptimized: 99353
+// gas irOptimized code: 19200
 // gas legacy: 100973
 // gas legacy code: 32600
 // gas legacyOptimized: 99137
