@@ -284,18 +284,18 @@ void ssacfg::Stack::permute(std::vector<StackSlot> const& _target)
 			auto const depth = util::findOffset(m_stack | ranges::views::reverse, _target[i]);
 			if (depth > 0)
 				swap(*depth);
-			// yulAssert(m_stack.back() == _target[i]);
+			yulAssert(top() == _target[i]);
 			if (m_stack.size() - 1 - i > 0)
 				swap(m_stack.size() - 1 - i);
 		}
-		//yulAssert(
-		//	m_stack[i] == _target[i],
-		//	fmt::format("Stack target mismatch: current[{}] = {} =/= {} = target[{}]", i, stackSlotToString(m_cfg.get(), m_stack[i]), stackSlotToString(m_cfg.get(), _target[i]), i)
-		//);
+		yulAssert(
+			m_stack[i] == _target[i],
+			fmt::format("Stack target mismatch: current[{}] = {} =/= {} = target[{}]", i, stackSlotToString(m_cfg.get(), m_stack[i]), stackSlotToString(m_cfg.get(), _target[i]), i)
+		);
 	}
 
 	yulAssert(size() == _target.size());
-	//yulAssert(m_stack == _target, fmt::format("Stack target mismatch: current = {} =/= {} = target", stackToString(m_cfg.get(), m_stack), stackToString(m_cfg.get(), _target)));
+	yulAssert(m_stack == _target, fmt::format("Stack target mismatch: current = {} =/= {} = target", stackToString(m_cfg.get(), m_stack), stackToString(m_cfg.get(), _target)));
 }
 
 std::vector<StackTooDeepError> SSACFGEVMCodeTransform::run(
